@@ -12,14 +12,15 @@ _LOGGER = logging.getLogger(__name__)
 
 # Creating nested dictionary of key/pairs
 OPTIONS = {
-    "Op_Mode": {0: "Stopped", 1: "Away", 2: "Home", 3: "Boost", 4: "Travelling"},
+    "Op_Mode": {0: "Stoppet", 1: "Borte", 2: "Hjemme", 3: "Boost", 4: "Reise"},
 }
 
 DATA_TYPE = namedtuple('DataType', ['category', 'icon'])
 
-SwegonEntity = namedtuple('SwegonEntity', ['key', 'entityName', 'data_type', 'options'])
+SwegonEntity = namedtuple('SwegonEntity', ['group', 'key', 'entityName', 'data_type', 'options'])
 ENTITIES = [
-    SwegonEntity("Op_Mode", "Operating Mode", DATA_TYPE(None, None), OPTIONS["Op_Mode"])
+    SwegonEntity("Commands", "Op_Mode", "Operating Mode", DATA_TYPE(None, None), OPTIONS["Op_Mode"]),
+    SwegonEntity(None, "Config_Selection", "Config Selection", DATA_TYPE(EntityCategory.CONFIG, None), None),
 ]
 
 async def async_setup_entry(hass, config_entry, async_add_devices):
@@ -45,13 +46,20 @@ class SwegonSelectEntity(SwegonBaseEntity, SelectEntity):
         super().__init__(coordinator, swegonentity)
 
         """Select Entity properties"""
-        self._options = swegonentity.options
+        if self._key == "Config_Selection":
+            self._options = self.coordinator.get_config_options()
+        else:
+            self._options = swegonentity.options
 
     @property
     def current_option(self):
         try:
-            optionIndex = self.coordinator.get_value(self._key)
-            option = self._options[optionIndex]
+            if self._key == "Config_Selection":
+                optionIndex = self.coordinator.config_selection
+                option = self._options[optionIndex]
+            else:
+                optionIndex = self.coordinator.get_value(self._group, self._key)
+                option = self._options[optionIndex]
         except Exception as e:
             option = "Unknown"
         return option
@@ -63,6 +71,7 @@ class SwegonSelectEntity(SwegonBaseEntity, SelectEntity):
     async def async_select_option(self, option):
         """ Find new value """
         value = None
+
         for key, val in self._options.items():
             if val == option:
                 value = key
@@ -72,5 +81,12 @@ class SwegonSelectEntity(SwegonBaseEntity, SelectEntity):
             return
 
         """ Write value to device """
-        await self.coordinator.write_value(self._key, value)
-        self.async_schedule_update_ha_state(force_refresh=False)
+        try:
+            if self._key == "Config_Selection":
+                await self.coordinator.config_select(option, value)
+            else:           
+                await self.coordinator.write_value(self._group, self._key, value)
+        except Exception as err:
+            _LOGGER.debug("Error writing command: %s %s", self._group, self._key)
+        finally:
+            self.async_schedule_update_ha_state(force_refresh=False)

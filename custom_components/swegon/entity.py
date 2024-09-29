@@ -26,6 +26,7 @@ class SwegonBaseEntity(CoordinatorEntity):
         self._extra_state_attributes = {}
         
         """Store this entities key."""
+        self._group = swegonentity.group
         self._key = swegonentity.key
 
     @property

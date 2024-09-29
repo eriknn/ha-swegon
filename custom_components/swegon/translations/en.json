@@ -9,7 +9,9 @@
                     "name": "Name",                     
                     "ip_address": "IP Address",
 					"port": "Port",
-					"scan_interval": "Scan Interval in seconds"
+					"slave_id": "Slave ID",
+					"scan_interval": "Scan Interval in seconds",
+                    "scan_interval_fast": "Fast Scan Interval in seconds"  	
                 }        
             }
         },
@@ -26,7 +28,9 @@
                     "name": "Name",                     
                     "ip_address": "IP Address",
 					"port": "Port",
-					"scan_interval": "Scan Interval in seconds"
+					"slave_id": "Slave ID",
+					"scan_interval": "Scan Interval in seconds",
+                    "scan_interval_fast": "Fast Scan Interval in seconds"  	
                 }
             }
         },

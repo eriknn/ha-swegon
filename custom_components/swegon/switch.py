@@ -11,10 +11,10 @@ from .entity import SwegonBaseEntity
 _LOGGER = logging.getLogger(__name__)
 DATA_TYPE = namedtuple('DataType', ['category', 'icon'])
 
-SwegonEntity = namedtuple('SwegonEntity', ['key', 'entityName', 'data_type'])
+SwegonEntity = namedtuple('SwegonEntity', ['group', 'key', 'entityName', 'data_type'])
 ENTITIES = [
-    SwegonEntity("Fireplace_Mode", "Fireplace Mode", DATA_TYPE(None, None)),
-    SwegonEntity("Traveling_Mode", "Traveling Mode", DATA_TYPE(None, None)),
+    SwegonEntity("Commands", "Fireplace_Mode", "Fireplace Mode", DATA_TYPE(None, None)),
+    SwegonEntity("Commands", "Travelling_Mode", "Travelling Mode", DATA_TYPE(None, None)),
 ]
 
 async def async_setup_entry(hass, config_entry, async_add_devices):
@@ -42,7 +42,7 @@ class SwegonSwitchEntity(SwegonBaseEntity, SwitchEntity):
     @property
     def is_on(self):
         """Return the state of the switch."""
-        return self.coordinator.get_value(self._key)
+        return self.coordinator.get_value(self._group, self._key)
 
     async def async_turn_on(self, **kwargs):
         await self.writeValue(1)
@@ -52,5 +52,9 @@ class SwegonSwitchEntity(SwegonBaseEntity, SwitchEntity):
 
     async def writeValue(self, value):
         """ Write value to device """
-        await self.coordinator.write_value(self._key, value)
-        self.async_schedule_update_ha_state(force_refresh=False)
+        try:
+            await self.coordinator.write_value(self._group, self._key, value)
+        except Exception as err:
+            _LOGGER.debug("Error writing command: %s %s", self._group, self._key)
+        finally:
+            self.async_schedule_update_ha_state(force_refresh=False)

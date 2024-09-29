@@ -8,8 +8,10 @@
                 "data": {                     
                     "name": "Navn",                     
                     "ip_address": "IP-adresse",   
-					"port": "Port", 
-                    "scan_interval": "Pollinterval i sekunder"
+					"port": "Port",
+					"slave_id": "Slave ID",
+                    "scan_interval": "Pollinterval i sekunder",
+                    "scan_interval_fast": "Hurtig pollinterval i sekunder"  	
                 }        
             }
         },
@@ -25,8 +27,10 @@
                 "data": {                     
                     "name": "Navn",                     
                     "ip_address": "IP-adresse",
-					"port": "Port",    
-                    "scan_interval": "Pollinterval i sekunder"
+					"port": "Port",
+					"slave_id": "Slave ID",    
+                    "scan_interval": "Pollinterval i sekunder",
+                    "scan_interval_fast": "Hurtig pollinterval i sekunder" 
                 } 
             }
         },

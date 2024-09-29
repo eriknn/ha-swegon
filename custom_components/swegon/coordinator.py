@@ -11,7 +11,12 @@ from .swegon import Swegon
 _LOGGER = logging.getLogger(__name__)
 
 class SwegonCoordinator(DataUpdateCoordinator):
-    def __init__(self, hass, device, ip, port, scan_interval):
+    _fast_poll_enabled = False
+    _fast_poll_count = 0
+    _normal_poll_interval = 60
+    _fast_poll_interval = 10
+    
+    def __init__(self, hass, device, ip, port, slave_id, scan_interval, scan_interval_fast):
         """Initialize coordinator parent"""
         super().__init__(
             hass,
@@ -22,33 +27,70 @@ class SwegonCoordinator(DataUpdateCoordinator):
             update_interval=dt.timedelta(seconds=scan_interval),
         )
 
+        self._normal_poll_interval = scan_interval
+        self._fast_poll_interval = scan_interval_fast
+
         self._device = device
-        self._swegonDevice = Swegon(ip, port)
+        self._swegonDevice = Swegon(ip, port, slave_id)
 
         # Initialize states
-        self._loaded = False
         self._measurements = None
         self._setpoints = None
         self._timestamp = dt.datetime(2024, 1, 1)
-        
+
+        # Storage for config selection
+        self.config_selection = 0
+
+        # Callback to entities
+        self._update_callbacks = {}
+
+    @property
+    def device_id(self):
+        return self._device.id
+
+    @property
+    def devicename(self):
+        return self._device.name
+
+    @property
+    def identifiers(self):
+        return self._device.identifiers
+
+    def setFastPollMode(self):
+        _LOGGER.debug("Enabling fast poll mode")
+        self._fast_poll_enabled = True
+        self._fast_poll_count = 0
+        self.update_interval = dt.timedelta(seconds=self._fast_poll_interval)
+        self._schedule_refresh()
+
+    def setNormalPollMode(self):
+        _LOGGER.debug("Enabling normal poll mode")
+        self._fast_poll_enabled = False
+        self.update_interval = dt.timedelta(seconds=self._normal_poll_interval)
+
+
     async def _async_update_data(self):
         _LOGGER.debug("Coordinator updating data!!")
+
+        """ Counter for fast polling """
+        if self._fast_poll_enabled:
+            self._fast_poll_count += 1
+            if self._fast_poll_count > 5:
+                self.setNormalPollMode()
 
         """ Fetch data """
         try:
             async with async_timeout.timeout(20):
-                if self._swegonDevice.Device_Info["FW_Maj"].Value == 0:
+                if self._swegonDevice.Datapoints["Device_Info"]["FW_Maj"].Value == 0:
                     await self._swegonDevice.readDeviceInfo()
+                    await self._async_update_deviceInfo()
                 if (dt.datetime.now() - self._timestamp) > dt.timedelta(hours=3):
                     await self._swegonDevice.readSetpoints() 
                     self._timestamp = dt.datetime.now()
+                await self._swegonDevice.readAlarms()
                 await self._swegonDevice.readSensors()
-                await self._swegonDevice.readStatuses()
+                await self._swegonDevice.readCommands()
                 await self._swegonDevice.readUnitStatuses()
-
-                if not self._loaded:
-                    await self._async_update_deviceInfo()
-                    self._loaded = True
                 
         except Exception as err:
             _LOGGER.debug("Failed when fetching data: %s", str(err))
@@ -64,36 +106,32 @@ class SwegonCoordinator(DataUpdateCoordinator):
         )
         _LOGGER.debug("Updated device data for: %s", self.devicename) 
 
-    @property
-    def device_id(self):
-        return self._device.id
+    def registerOnUpdateCallback(self, entity, callbackfunc):
+        self._update_callbacks.update({entity: callbackfunc})
 
-    @property
-    def devicename(self):
-        return self._device.name
+    async def config_select(self, key, value):
+        _LOGGER.debug("Selected: %s", key)
 
-    @property
-    def identifiers(self):
-        return self._device.identifiers    
-
-    def get_value(self, key):
-        if key in self._swegonDevice.Sensors:
-            return self._swegonDevice.Sensors[key].Value
-        elif key in self._swegonDevice.UnitStatuses:
-            return self._swegonDevice.UnitStatuses[key].Value
-        elif key in self._swegonDevice.Setpoints:
-            return self._swegonDevice.Setpoints[key].Value
-        elif key in self._swegonDevice.Statuses:
-            return self._swegonDevice.Statuses[key].Value
-        return None    
-
-    async def write_value(self, key, value) -> bool:
-        _LOGGER.debug("Write_Data: %s", key)
+        self.config_selection = value
         try:
-            if key in self._swegonDevice.Setpoints:
-                await self._swegonDevice.writeSetpoint(key, value)
-            elif key in self._swegonDevice.Statuses:
-                await self._swegonDevice.writeStatus(key, value)
-        except Exception as e:
-            _LOGGER.debug("Not able to write command: %s", str(e))
-            return False
+            await self._swegonDevice.readValue("Config", key)
+        finally:
+            await self._update_callbacks["Config_Value"](key)
+
+    def get_config_options(self):
+        configs = self._swegonDevice.Datapoints["Config"]
+        options = {}
+        for i, config in enumerate(configs):
+            options.update({i:config})
+        return options
+
+    def get_value(self, group, key):
+        if group in self._swegonDevice.Datapoints:
+            if key in self._swegonDevice.Datapoints[group]:
+                return self._swegonDevice.Datapoints[group][key].Value
+        return None
+
+    async def write_value(self, group, key, value) -> bool:
+        _LOGGER.debug("Write_Data: %s - %s - %s", group, key, value)
+        await self._swegonDevice.writeValue(group, key, value)
+        self.setFastPollMode()

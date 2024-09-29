@@ -15,7 +15,9 @@ from .const import (
     CONF_NAME,
     CONF_IP,
     CONF_PORT,
-    CONF_SCAN_INTERVAL
+    CONF_SLAVE_ID,
+    CONF_SCAN_INTERVAL,
+    CONF_SCAN_INTERVAL_FAST
 )
 from .coordinator import SwegonCoordinator
 
@@ -30,7 +32,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     name = entry.data[CONF_NAME]
     ip = entry.data[CONF_IP]
     port = entry.data[CONF_PORT]
+    slave_id = entry.data[CONF_SLAVE_ID]
     scan_interval = entry.data[CONF_SCAN_INTERVAL]
+    scan_interval_fast = entry.data[CONF_SCAN_INTERVAL_FAST]
 
     # Create device
     # Each config entry will have only one device, so we use the entry_id as a
@@ -44,7 +48,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     )
 
     # Set up coordinator
-    coordinator = SwegonCoordinator(hass, dev, ip, port, scan_interval)
+    coordinator = SwegonCoordinator(hass, dev, ip, port, slave_id,scan_interval, scan_interval_fast)
     hass.data[DOMAIN][entry.entry_id] = coordinator
     
     # Forward the setup to the platforms.

@@ -12,16 +12,18 @@ from homeassistant.helpers import selector
 from typing import Any
 
 from homeassistant.const import CONF_DEVICES
-from .const import DOMAIN, CONF_NAME, CONF_IP, CONF_PORT, CONF_SCAN_INTERVAL
-from .const import DEFAULT_SCAN_INTERVAL
+from .const import DOMAIN, CONF_NAME, CONF_IP, CONF_PORT, CONF_SLAVE_ID, CONF_SCAN_INTERVAL, CONF_SCAN_INTERVAL_FAST
+from .const import DEFAULT_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL_FAST
 
 CONFIG_ENTRY_NAME = "Swegon"
 
 DEVICE_DATA = {
     CONF_NAME: "",
-    CONF_IP: "192.168.0.50",
-    CONF_PORT: "502",
-    CONF_SCAN_INTERVAL: DEFAULT_SCAN_INTERVAL
+    CONF_IP: "192.168.10.13",
+    CONF_PORT: 502,
+    CONF_SLAVE_ID: 1,
+    CONF_SCAN_INTERVAL: DEFAULT_SCAN_INTERVAL,
+    CONF_SCAN_INTERVAL_FAST: DEFAULT_SCAN_INTERVAL_FAST
 }
 
 _LOGGER = logging.getLogger(__name__)
@@ -75,10 +77,16 @@ def getDeviceSchema(user_input: dict[str, Any] | None = None) -> vol.Schema:
             ): cv.string,
             vol.Optional(
                 CONF_PORT, description="Port", default=user_input[CONF_PORT]
-            ): cv.string,
+            ): vol.All(vol.Coerce(int), vol.Range(min=0, max=65535)),
+            vol.Optional(
+                CONF_SLAVE_ID, description="Slave ID", default=user_input[CONF_SLAVE_ID]
+            ): vol.All(vol.Coerce(int), vol.Range(min=0, max=256)),
             vol.Optional(
                 CONF_SCAN_INTERVAL, default=user_input[CONF_SCAN_INTERVAL]
             ): vol.All(vol.Coerce(int), vol.Range(min=5, max=999)),
+            vol.Optional(
+                CONF_SCAN_INTERVAL_FAST, default=user_input[CONF_SCAN_INTERVAL_FAST]
+            ): vol.All(vol.Coerce(int), vol.Range(min=1, max=999)),
         }
     )
 
