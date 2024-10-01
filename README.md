@@ -24,4 +24,4 @@ Connect terminals 1 and 2 to the USR-W610.
 
 ## Supported devices
 
-Implemented using the Swegon CASA modbus list (R4-C). This is probably the same for other models as well.
+Implemented using the Swegon CASA modbus list (R4-C). This is probably the same for other models as well. We are reading the model name from the device, and as long as we're able to do that we could automatically select a modbus list. Or maybe have a selection for devices in the integration configuration. Let me know if this is needed and we can figure it out!
