@@ -2,7 +2,9 @@
 
 ## Installation
 
-Download using HACS or manually put it in the custom_components folder.
+1. Download using HACS or manually put it in the custom_components folder.
+2. Add the integration (Devices and services -> Add integration)
+3. Configure the integration via the configure button in the now-added integration.
 
 ## Hardware
 
