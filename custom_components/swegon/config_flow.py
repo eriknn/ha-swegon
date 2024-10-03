@@ -12,13 +12,15 @@ from homeassistant.helpers import selector
 from typing import Any
 
 from homeassistant.const import CONF_DEVICES
-from .const import DOMAIN, CONF_NAME, CONF_IP, CONF_PORT, CONF_SLAVE_ID, CONF_SCAN_INTERVAL, CONF_SCAN_INTERVAL_FAST
+from .const import DOMAIN, CONF_NAME, CONF_DEVICE_MODEL, CONF_IP, CONF_PORT, CONF_SLAVE_ID, CONF_SCAN_INTERVAL, CONF_SCAN_INTERVAL_FAST
 from .const import DEFAULT_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL_FAST
+from .const import DEVICE_CASA_R4, DEVICE_CASA_R15
 
 CONFIG_ENTRY_NAME = "Swegon"
 
 DEVICE_DATA = {
     CONF_NAME: "",
+    CONF_DEVICE_MODEL: DEVICE_CASA_R4,
     CONF_IP: "192.168.10.13",
     CONF_PORT: 502,
     CONF_SLAVE_ID: 1,
@@ -67,11 +69,16 @@ class SwegonOptionsFlowHandler(OptionsFlow):
 """ ################################################### """
 # Schema taking device details when adding or updating
 def getDeviceSchema(user_input: dict[str, Any] | None = None) -> vol.Schema:
+    DEVICE_TYPES = [DEVICE_CASA_R4, DEVICE_CASA_R15]
+
     data_schema = vol.Schema(
         {
             vol.Required(
                 CONF_NAME, description="Name", default=user_input[CONF_NAME]
             ): cv.string,
+            vol.Required(CONF_DEVICE_MODEL, default=user_input[CONF_DEVICE_MODEL]): selector.SelectSelector(
+                selector.SelectSelectorConfig(options=DEVICE_TYPES),
+            ),     
             vol.Required(
                 CONF_IP, description="IP Address", default=user_input[CONF_IP]
             ): cv.string,

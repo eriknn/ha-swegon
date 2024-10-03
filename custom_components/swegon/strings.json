@@ -6,7 +6,8 @@
 				"title": "Swegon Modbus TCP/IP Settings",
                 "description": "Enter your details",
                 "data": {                     
-                    "name": "Name",                     
+                    "name": "Name", 
+                    "device_model": "Device Model",                   
                     "ip_address": "IP Address",
 					"port": "Port",
 					"slave_id": "Slave ID",
@@ -25,7 +26,8 @@
 				"title": "Swegon Modbus TCP/IP Settings",
                 "description": "Enter your details",
                 "data": {                     
-                    "name": "Name",                     
+                    "name": "Name", 
+                    "device_model": "Device Model",                    
                     "ip_address": "IP Address",
 					"port": "Port",
 					"slave_id": "Slave ID",

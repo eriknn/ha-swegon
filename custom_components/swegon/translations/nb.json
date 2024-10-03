@@ -6,7 +6,8 @@
 				"title": "Swegon Modbus TCP/IP Innstillinger",
                 "description": "Legg inn detaljer",
                 "data": {                     
-                    "name": "Navn",                     
+                    "name": "Navn", 
+                    "device_model": "Modell",                    
                     "ip_address": "IP-adresse",   
 					"port": "Port",
 					"slave_id": "Slave ID",
@@ -25,7 +26,8 @@
 				"title": "Swegon Modbus TCP/IP Innstillinger",
                 "description": "Legg inn detaljer",
                 "data": {                     
-                    "name": "Navn",                     
+                    "name": "Navn",  
+                    "device_model": "Modell",                      
                     "ip_address": "IP-adresse",
 					"port": "Port",
 					"slave_id": "Slave ID",    

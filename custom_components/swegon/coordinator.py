@@ -6,7 +6,7 @@ from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .const import DOMAIN
-from .swegon import Swegon
+from .pyswegon.swegon import Swegon
 
 _LOGGER = logging.getLogger(__name__)
 
