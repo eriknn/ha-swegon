@@ -40,5 +40,18 @@
             "add_success": "Enhet {dev_name} ble lagt til",
 			"already_configured": "Enhet {dev_name} er allerede konfigurert"
 		}
+    },
+    "entity": {
+        "select": {
+            "op_mode": {
+                "state": {
+                    "stopped": "Stoppet",
+                    "away": "Borte",
+                    "home": "Hjemme",
+                    "boost": "Boost",
+                    "travel": "Reise"
+                }
+            }
+        }
     }
 }

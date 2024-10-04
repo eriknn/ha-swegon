@@ -40,5 +40,18 @@
             "add_success": "Device {dev_name} successfully added",
 			"already_configured": "Device {dev_name} is already configured"
 		}
+    },
+    "entity": {
+        "select": {
+            "op_mode": {
+                "state": {
+                    "stopped": "Stopped",
+                    "away": "Away",
+                    "home": "Home",
+                    "boost": "Boost",
+                    "travel": "Travel"
+                }
+            }
+        }
     }
 }

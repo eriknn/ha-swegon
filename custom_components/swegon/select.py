@@ -12,7 +12,7 @@ _LOGGER = logging.getLogger(__name__)
 
 # Creating nested dictionary of key/pairs
 OPTIONS = {
-    "Op_Mode": {0: "Stoppet", 1: "Borte", 2: "Hjemme", 3: "Boost", 4: "Reise"},
+    "Op_Mode": {0: "stopped", 1: "away", 2: "home", 3: "boost", 4: "travel"},
 }
 
 DATA_TYPE = namedtuple('DataType', ['category', 'icon'])
@@ -50,6 +50,7 @@ class SwegonSelectEntity(SwegonBaseEntity, SelectEntity):
             self._options = self.coordinator.get_config_options()
         else:
             self._options = swegonentity.options
+            self._attr_translation_key = "op_mode"
 
     @property
     def current_option(self):
