@@ -3,6 +3,7 @@ from dataclasses import dataclass
 import asyncio
 import importlib
 import logging
+import sys
 
 from pymodbus.client import ModbusTcpClient
 from pymodbus.exceptions import ModbusException
@@ -32,20 +33,25 @@ MODE_INPUT = 3
 MODE_HOLDING = 4
 
 class Swegon():
-    def __init__(self, host:str, port:int, slave_id:int):
+    def __init__(self, device_module:str, host:str, port:int, slave_id:int):
         self._client = ModbusTcpClient(host, port)
         self._slave_id = slave_id
 
-    async def async_load_device_data(self, device_module):
-        module_name = f"custom_components.swegon.pyswegon.devices.{device_module.lower().replace(' ', '_')}"
+        # Load correct datapoints
+        self.load_datapoints(device_module)
 
-        try:
-            # Import the module using importlib
-            module = await asyncio.to_thread(importlib.import_module, module_name)
-            self.Datapoints = module.Datapoints
-        except ImportError as e:
-            _LOGGER.error(f"Failed to import module {module_name}: {e}")
-            self.Datapoints = {} 
+
+    def load_datapoints(self, device_module:str):
+        module_name = f"{device_module.lower().replace(' ', '_')}"
+
+        if module_name == 'casa_r4':
+            from .devices.casa_r4 import CasaR4
+            self.Datapoints = CasaR4().Datapoints
+        elif module_name == 'casa_r15':
+            from .devices.casa_r15 import CasaR15
+            self.Datapoints = CasaR15().Datapoints
+        else:
+            self.Datapoints = {}
 
     def twos_complement(self, number) -> int:
         if number >> 15:

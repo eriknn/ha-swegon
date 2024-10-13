@@ -16,7 +16,7 @@ class SwegonCoordinator(DataUpdateCoordinator):
     _normal_poll_interval = 60
     _fast_poll_interval = 10
     
-    def __init__(self, hass, device, ip, port, slave_id, scan_interval, scan_interval_fast):
+    def __init__(self, hass, device, device_module:str, ip, port, slave_id, scan_interval, scan_interval_fast):
         """Initialize coordinator parent"""
         super().__init__(
             hass,
@@ -31,7 +31,7 @@ class SwegonCoordinator(DataUpdateCoordinator):
         self._fast_poll_interval = scan_interval_fast
 
         self._device = device
-        self._swegonDevice = Swegon(ip, port, slave_id)
+        self._swegonDevice = Swegon(device_module, ip, port, slave_id)
 
         # Initialize states
         self._measurements = None

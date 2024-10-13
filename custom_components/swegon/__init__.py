@@ -51,8 +51,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     )
 
     # Set up coordinator
-    coordinator = SwegonCoordinator(hass, dev, ip, port, slave_id,scan_interval, scan_interval_fast)
-    await coordinator._swegonDevice.async_load_device_data(device_model)
+    coordinator = SwegonCoordinator(hass, dev, device_model, ip, port, slave_id,scan_interval, scan_interval_fast)
     hass.data[DOMAIN][entry.entry_id] = coordinator
     
     # Forward the setup to the platforms.
