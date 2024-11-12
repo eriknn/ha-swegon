@@ -9,6 +9,6 @@ _LOGGER = logging.getLogger(__name__)
 class CasaR15(CasaBase):
     def __init__(self):
         super().__init__()
-        self.Datapoints[SETPOINTS]["Temp_SP"] = Modbus_Datapoint(5100, 0.01)
+        self.Datapoints[SETPOINTS]["Temp_SP"] = Modbus_Datapoint(5100, 1)
 
         _LOGGER.debug("Loaded datapoints for Swegon Casa R15")
