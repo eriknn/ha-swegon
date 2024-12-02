@@ -9,5 +9,5 @@
 	"issue_tracker": "https://github.com/eriknn/swegon/issues",
 	"loggers": ["custom_components.swegon"],
 	"requirements": [],
-	"version": "1.0.0"
+	"version": "1.0.5"
 }

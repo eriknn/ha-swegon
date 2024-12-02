@@ -129,5 +129,11 @@ class CasaBase:
         self.Datapoints[CONFIG]["Night_Cooling_FreshAir_Start"] = Modbus_Datapoint(5165)     #5165
         self.Datapoints[CONFIG]["Night_Cooling_RoomTemp_Start"] = Modbus_Datapoint(5166)     #5166
         self.Datapoints[CONFIG]["Night_Cooling_SupplyTemp_Min"] = Modbus_Datapoint(5167)     #5167
-
+        self.Datapoints[CONFIG]["Away_Supply_Speed"] = Modbus_Datapoint(5301)               #5301
+        self.Datapoints[CONFIG]["Away_Exhaust_Speed"] = Modbus_Datapoint(5302)              #5302
+        self.Datapoints[CONFIG]["Home_Supply_Speed"] = Modbus_Datapoint(5303)               #5303
+        self.Datapoints[CONFIG]["Home_Exhaust_Speed"] = Modbus_Datapoint(5304)              #5304
+        self.Datapoints[CONFIG]["Boost_Supply_Speed"] = Modbus_Datapoint(5305)              #5305
+        self.Datapoints[CONFIG]["Boost_Exhaust_Speed"] = Modbus_Datapoint(5306)              #5306
+        
         _LOGGER.debug("Loaded base datapoints for Swegon Casa")
