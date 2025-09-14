@@ -1,14 +1,9 @@
 from dataclasses import dataclass
 
-import asyncio
-import importlib
 import logging
-import sys
 
 from pymodbus.client import ModbusTcpClient
 from pymodbus.exceptions import ModbusException
-from pymodbus.pdu import ModbusResponse
-from pymodbus.transaction import ModbusSocketFramer
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -34,7 +29,7 @@ MODE_HOLDING = 4
 
 class Swegon():
     def __init__(self, device_module:str, host:str, port:int, slave_id:int):
-        self._client = ModbusTcpClient(host, port)
+        self._client = ModbusTcpClient(host=host, port=port)
         self._slave_id = slave_id
 
         # Load correct datapoints
@@ -103,7 +98,8 @@ class Swegon():
 
     async def readDeviceInfo(self):
         # We read multiple input registers in one message
-        response = self._client.read_input_registers(6000,47,self._slave_id)
+        response = self._client.read_input_registers(address=6000, count=47, device_id=self._slave_id)
+
         if response.isError():
             raise ModbusException('{}'.format(response))
         else:
@@ -138,9 +134,9 @@ class Swegon():
         
         mode = self.getMode(group)
         if mode == MODE_INPUT:
-            response = self._client.read_input_registers(first_address,n_reg,self._slave_id)
+            response = self._client.read_input_registers(address=first_address, count=n_reg, device_id=self._slave_id)
         elif mode == MODE_HOLDING:
-            response = self._client.read_holding_registers(first_address,n_reg,self._slave_id)
+            response = self._client.read_holding_registers(address=first_address, count=n_reg, device_id=self._slave_id)
             
         if response.isError():
             raise ModbusException('{}'.format(response))
@@ -160,10 +156,11 @@ class Swegon():
         _LOGGER.debug("Reading value: %s - %s", group, key)
 
         mode = self.getMode(group)
+
         if mode == MODE_INPUT:
-            response = self._client.read_input_registers(self.Datapoints[group][key].Address,1,self._slave_id)
+            response = self._client.read_input_registers(address=self.Datapoints[group][key].Address, count=1, device_id=self._slave_id)
         elif mode == MODE_HOLDING:
-            response = self._client.read_holding_registers(self.Datapoints[group][key].Address,1,self._slave_id)
+            response = self._client.read_holding_registers(address=self.Datapoints[group][key].Address, count=1, device_id=self._slave_id)
 
         if response.isError():
             raise ModbusException('{}'.format(response))
@@ -179,7 +176,8 @@ class Swegon():
         _LOGGER.debug("Writing value: %s - %s - %s", group, key, value)
         scaledVal = round(value/self.Datapoints[group][key].Scaling)
         scaledVal = self.twos_complement(scaledVal)
-        response = self._client.write_register(self.Datapoints[group][key].Address, scaledVal, self._slave_id)
+        response = self._client.write_register(address=self.Datapoints[group][key].Address, value=scaledVal, device_id=self._slave_id)
+
         if response.isError():
             raise ModbusException('{}'.format(response))
         else:
