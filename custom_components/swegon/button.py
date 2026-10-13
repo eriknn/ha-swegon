@@ -1,45 +1,30 @@
 import logging
 
-from collections import namedtuple
-from homeassistant.components.button import ButtonDeviceClass, ButtonEntity
-from homeassistant.helpers.entity import EntityCategory
+from homeassistant.components.button import ButtonEntity
 
-from .const import DOMAIN, CONF_IP
-from .entity import SwegonBaseEntity
+from .const import DOMAIN
+from .coordinator import ModbusCoordinator
+from .entity import ModbusBaseEntity
+from .entity_factory import create_entities
+
+from .devices.datatypes import ModbusGroup, ModbusDatapoint, EntityDataButton
 
 _LOGGER = logging.getLogger(__name__)
 
-DATA_TYPE = namedtuple('DataType', ['deviceClass', 'category', 'icon'])
-DATA_TYPES = {}
-DATA_TYPES["Reset_Alarms"] = DATA_TYPE(None, None, "mdi:bell-cancel")
+async def async_setup_entry(hass, config_entry, async_add_entities):
+    """Setup entities from a config entry created in the integrations UI."""
+    coordinator:ModbusCoordinator = hass.data[DOMAIN][config_entry.entry_id]
+    async_add_entities(create_entities(coordinator, ModbusButtonEntity, EntityDataButton))
 
-SwegonEntity = namedtuple('SwegonEntity', ['group', 'key', 'entityName', 'data_type'])
-ENTITIES = [
-    SwegonEntity("Config", "Reset_Alarms", "Reset Alarms", DATA_TYPES["Reset_Alarms"]),
-]
+class ModbusButtonEntity(ModbusBaseEntity, ButtonEntity):
+    """Representation of a Button."""
 
-async def async_setup_entry(hass, config_entry, async_add_devices):
-    """Setup button from a config entry created in the integrations UI."""
-    # Create entities
-    ha_entities = []
+    def __init__(self, coordinator, group:ModbusGroup, key:str, modbusDataPoint:ModbusDatapoint):
+        """Initialize ModbusBaseEntity."""
+        super().__init__(coordinator, group, key, modbusDataPoint)
 
-    # Find coordinator for this device
-    coordinator = hass.data[DOMAIN][config_entry.entry_id]
-
-    # Create entities for this device
-    for swegonentity in ENTITIES:
-        ha_entities.append(SwegonButtonEntity(coordinator, swegonentity))
-
-    async_add_devices(ha_entities, True)
-
-class SwegonButtonEntity(SwegonBaseEntity, ButtonEntity):
-    """Representation of a Sensor."""
-
-    def __init__(self, coordinator, swegonentity):
-        super().__init__(coordinator, swegonentity)
-
-        """Button Entity properties"""
-        self._attr_device_class = swegonentity.data_type.deviceClass
+    def _loadEntitySettings(self):
+        self._attr_device_class = self.modbusDataPoint.entity_data.deviceClass
 
     async def async_press(self) -> None:
         """ Write value to device """

@@ -1,62 +1,44 @@
 import logging
 
-from collections import namedtuple
 from homeassistant.components.select import SelectEntity
-from homeassistant.const import CONF_DEVICES
-from homeassistant.helpers.entity import EntityCategory
 
-from .const import DOMAIN, CONF_IP
-from .entity import SwegonBaseEntity
+from .const import DOMAIN
+from .coordinator import ModbusCoordinator
+from .entity import ModbusBaseEntity
+from .entity_factory import create_entities
+
+from .devices.datatypes import ModbusGroup, ModbusDefaultGroups, ModbusDatapoint, EntityDataSelect
 
 _LOGGER = logging.getLogger(__name__)
 
-# Creating nested dictionary of key/pairs
-OPTIONS = {
-    "Op_Mode": {0: "stopped", 1: "away", 2: "home", 3: "boost", 4: "travel"},
-}
+async def async_setup_entry(hass, config_entry, async_add_entities):
+    """Setup entities from a config entry created in the integrations UI."""
+    coordinator:ModbusCoordinator = hass.data[DOMAIN][config_entry.entry_id]
+    async_add_entities(create_entities(coordinator, ModbusSelectEntity, EntityDataSelect))
 
-DATA_TYPE = namedtuple('DataType', ['category', 'icon'])
-
-SwegonEntity = namedtuple('SwegonEntity', ['group', 'key', 'entityName', 'data_type', 'options'])
-ENTITIES = [
-    SwegonEntity("Commands", "Op_Mode", "Operating Mode", DATA_TYPE(None, None), OPTIONS["Op_Mode"]),
-    SwegonEntity(None, "Config_Selection", "Config Selection", DATA_TYPE(EntityCategory.CONFIG, None), None),
-]
-
-async def async_setup_entry(hass, config_entry, async_add_devices):
-    """Setup selects from a config entry created in the integrations UI."""
-    # Create entities
-    ha_entities = []
-
-    # Find coordinator for this device
-    coordinator = hass.data[DOMAIN][config_entry.entry_id]
-
-    # Create entities for this device
-    for swegonentity in ENTITIES:
-        ha_entities.append(SwegonSelectEntity(coordinator, swegonentity))
-
-    async_add_devices(ha_entities, True)
-
-
-class SwegonSelectEntity(SwegonBaseEntity, SelectEntity):
+class ModbusSelectEntity(ModbusBaseEntity, SelectEntity):
     """Representation of a Select."""
 
-    def __init__(self, coordinator, swegonentity):
-        """Pass coordinator to SwegonEntity."""
-        super().__init__(coordinator, swegonentity)
+    def __init__(self, coordinator:ModbusCoordinator, group:ModbusGroup, key:str, modbusDataPoint:ModbusDatapoint):
+        """Initialize ModbusBaseEntity."""
+        super().__init__(coordinator, group, key, modbusDataPoint)
 
-        """Select Entity properties"""
-        if self._key == "Config_Selection":
+        """ Give coordinator handle to config value entity """
+        if group == ModbusDefaultGroups.UI and key == "Config Value Select":
+            coordinator.config_value_select = self
+            self._attr_device_info = None       # Hide entity
+
+    def _loadEntitySettings(self):
+        if self._key == "Config Selection":
             self._options = self.coordinator.get_config_options()
         else:
-            self._options = swegonentity.options
-            self._attr_translation_key = "op_mode"
+            self._options = self.modbusDataPoint.entity_data.options
 
     @property
     def current_option(self):
         try:
-            if self._key == "Config_Selection":
-                optionIndex = self.coordinator.config_selection
+            if self._key == "Config Selection":
+                optionIndex = self.config_selection
                 option = self._options[optionIndex]
             else:
                 optionIndex = self.coordinator.get_value(self._group, self._key)
@@ -82,12 +64,15 @@ class SwegonSelectEntity(SwegonBaseEntity, SelectEntity):
             return
 
         """ Write value to device """
+        _LOGGER.debug("Select: %s", self._key)
         try:
-            if self._key == "Config_Selection":
-                await self.coordinator.config_select(option, value)
+            if self._key == "Config Selection":
+                self.config_selection = value
+                await self.coordinator.config_select(option)
             else:           
+                _LOGGER.debug("Writing")
                 await self.coordinator.write_value(self._group, self._key, value)
         except Exception as err:
-            _LOGGER.debug("Error writing command: %s %s", self._group, self._key)
+            _LOGGER.debug("Error writing command: %s %s", self._group, self._key, exc_info=True)
         finally:
             self.async_schedule_update_ha_state(force_refresh=False)

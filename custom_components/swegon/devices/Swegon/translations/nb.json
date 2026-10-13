@@ -1,0 +1,9 @@
+{
+  "Operating Mode": {
+    "Stopped": "Stoppet",
+    "Away": "Borte",
+    "Home": "Hjemme",
+    "Boost": "Boost",
+    "Travel": "Reise"
+  }
+}

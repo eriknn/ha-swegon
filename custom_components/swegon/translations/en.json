@@ -1,0 +1,85 @@
+{    
+	"title": "Swegon Modbus TCP/IP",
+    "config": {         
+        "step": {   
+            "user": { 
+				"title": "Add Swegon Modbus Device",
+                "data": {
+                    "mode_selection": "Select a connection method"
+                }   
+            }, 
+            "add_tcpip": { 
+				"title": "Swegon Modbus TCP/IP Settings",
+                "description": "Enter your details",
+                "data": {                     
+                    "name": "Name", 
+                    "device_model": "Device Model",                   
+                    "ip_address": "IP Address",
+					"port": "Port",
+					"slave_id": "Slave ID",
+					"scan_interval": "Scan Interval in seconds",
+                    "scan_interval_fast": "Fast Scan Interval in seconds"  	
+                }        
+            }, 
+            "add_rtu": { 
+				"title": "Swegon Modbus RTU Settings",
+                "description": "Enter your details",
+                "data": {                     
+                    "name": "Name", 
+                    "device_model": "Device Model",                   
+                    "serial_port": "Serial port",
+					"serial_baud": "Baud rate",
+					"slave_id": "Slave ID",
+					"scan_interval": "Scan Interval in seconds",
+                    "scan_interval_fast": "Fast Scan Interval in seconds"  	
+                }        
+            }
+        },
+        "error": {
+            "mode_not_implemented": "The selected mode is not implemented."
+        }		
+    },   
+    "options": {         
+        "step": {
+            "init": {
+				"title": "Swegon Modbus Settings",
+                "description": "Enter your details",
+                "data": {                     
+                    "name": "Name", 
+                    "device_model": "Device Model",                    
+                    "ip_address": "IP Address",
+					"port": "Port",
+                    "serial_port": "Serial port",
+					"serial_baud": "Baud rate",
+					"slave_id": "Slave ID",
+					"scan_interval": "Scan Interval in seconds",
+                    "scan_interval_fast": "Fast Scan Interval in seconds"  	
+                }
+            }
+        },
+		"abort": {
+            "add_success": "Device {dev_name} successfully added",
+			"already_configured": "Device {dev_name} is already configured"
+		}
+    },
+    "selector": {
+        "mode_selection": {
+            "options": {
+				"add_tcpip": "TCP/IP",
+                "add_rtu": "RTU"
+            }
+        }
+    },
+    "services": {
+        "request_update": {
+            "name": "Request value update",
+            "description": "Triggers an update of data associated with a specific device.",
+            "fields": {
+                "device_id": {
+                    "name": "Device ID",
+                    "description": "The device for which to update values."
+                }
+            }
+        }
+    }
+}

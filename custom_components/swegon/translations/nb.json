@@ -1,8 +1,14 @@
 {    
 	"title": "Swegon Modbus TCP/IP",
     "config": {         
-        "step": {                    
+        "step": {  
             "user": { 
+				"title": "Legg til Swegon Modbus enhet",
+                "data": {
+                    "mode_selection": "Velg tilkoblingsmetode"
+                }   
+            }, 
+            "add_tcpip": { 
 				"title": "Swegon Modbus TCP/IP Innstillinger",
                 "description": "Legg inn detaljer",
                 "data": {                     
@@ -13,23 +19,38 @@
 					"slave_id": "Slave ID",
                     "scan_interval": "Pollinterval i sekunder",
                     "scan_interval_fast": "Hurtig pollinterval i sekunder"  	
+                }     
+            }, 
+            "add_rtu": { 
+				"title": "Swegon Modbus RTU Innstillinger",
+                "description": "Legg inn detaljer",
+                "data": {                     
+                    "name": "Navn", 
+                    "device_model": "Modell",                   
+                    "serial_port": "Seriellport",
+					"serial_baud": "Baudrate",
+					"slave_id": "Slave ID",
+                    "scan_interval": "Pollinterval i sekunder",
+                    "scan_interval_fast": "Hurtig pollinterval i sekunder"  	
                 }        
             }
         },
-		"abort": {
-			"already_configured": "Integrasjonen finnes allerede"
-		}		
+        "error": {
+            "mode_not_implemented": "Valgt tilkoblingsmetode er ikke implementert."
+        }			
     },   
     "options": {         
         "step": {
             "init": {
-				"title": "Swegon Modbus TCP/IP Innstillinger",
+				"title": "Swegon Modbus Innstillinger",
                 "description": "Legg inn detaljer",
                 "data": {                     
                     "name": "Navn",  
                     "device_model": "Modell",                      
                     "ip_address": "IP-adresse",
 					"port": "Port",
+                    "serial_port": "Seriellport",
+					"serial_baud": "Baudrate",
 					"slave_id": "Slave ID",    
                     "scan_interval": "Pollinterval i sekunder",
                     "scan_interval_fast": "Hurtig pollinterval i sekunder" 
@@ -41,15 +62,22 @@
 			"already_configured": "Enhet {dev_name} er allerede konfigurert"
 		}
     },
-    "entity": {
-        "select": {
-            "op_mode": {
-                "state": {
-                    "stopped": "Stoppet",
-                    "away": "Borte",
-                    "home": "Hjemme",
-                    "boost": "Boost",
-                    "travel": "Reise"
+    "selector": {
+        "mode_selection": {
+            "options": {
+				"add_tcpip": "TCP/IP",
+                "add_rtu": "RTU"
+            }
+        }
+    },
+    "services": {
+        "request_update": {
+            "name": "Be om verdioppdatering",
+            "description": "Starter en oppdatering av data knyttet til en spesifikk enhet.",
+            "fields": {
+                "device_id": {
+                    "name": "Enhets ID",
+                    "description": "Enheten som skal oppdateres."
                 }
             }
         }

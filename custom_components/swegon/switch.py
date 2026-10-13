@@ -1,43 +1,27 @@
 import logging
 
-from collections import namedtuple
 from homeassistant.components.switch import SwitchEntity
-from homeassistant.const import CONF_DEVICES
-from homeassistant.helpers.entity import EntityCategory
 
-from .const import DOMAIN, CONF_IP
-from .entity import SwegonBaseEntity
+from .const import DOMAIN
+from .coordinator import ModbusCoordinator
+from .entity import ModbusBaseEntity
+from .entity_factory import create_entities
+
+from .devices.datatypes import ModbusGroup, ModbusDatapoint, EntityDataSwitch
 
 _LOGGER = logging.getLogger(__name__)
-DATA_TYPE = namedtuple('DataType', ['category', 'icon'])
 
-SwegonEntity = namedtuple('SwegonEntity', ['group', 'key', 'entityName', 'data_type'])
-ENTITIES = [
-    SwegonEntity("Commands", "Fireplace_Mode", "Fireplace Mode", DATA_TYPE(None, None)),
-    SwegonEntity("Commands", "Travelling_Mode", "Travelling Mode", DATA_TYPE(None, None)),
-]
+async def async_setup_entry(hass, config_entry, async_add_entities):
+    """Setup entities from a config entry created in the integrations UI."""
+    coordinator:ModbusCoordinator = hass.data[DOMAIN][config_entry.entry_id]
+    async_add_entities(create_entities(coordinator, ModbusSwitchEntity, EntityDataSwitch))
 
-async def async_setup_entry(hass, config_entry, async_add_devices):
-    """Setup switch from a config entry created in the integrations UI."""
-    # Create entities
-    ha_entities = []
-
-    # Find coordinator for this device
-    coordinator = hass.data[DOMAIN][config_entry.entry_id]
-
-    # Create entities for this device
-    for swegonentity in ENTITIES:
-        ha_entities.append(SwegonSwitchEntity(coordinator, swegonentity))
-
-    async_add_devices(ha_entities, True)
-
-
-class SwegonSwitchEntity(SwegonBaseEntity, SwitchEntity):
+class ModbusSwitchEntity(ModbusBaseEntity, SwitchEntity):
     """Representation of a Switch."""
 
-    def __init__(self, coordinator, swegonentity):
-        """Pass coordinator to SwegonEntity."""
-        super().__init__(coordinator, swegonentity)
+    def __init__(self, coordinator, group:ModbusGroup, key:str, modbusDataPoint:ModbusDatapoint):
+        """Initialize ModbusBaseEntity."""
+        super().__init__(coordinator, group, key, modbusDataPoint)
 
     @property
     def is_on(self):

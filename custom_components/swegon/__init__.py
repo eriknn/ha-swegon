@@ -1,9 +1,9 @@
-"""Support for Swegon CASA over Modbus TCP/IP."""
+"""Support for Modbus devices."""
 import logging
-import async_timeout
 
+from functools import partial
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers.device_registry import DeviceEntry
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
@@ -13,31 +13,76 @@ from .const import (
     DOMAIN,
     PLATFORMS,
     CONF_NAME,
+    CONF_DEVICE_MODE,
     CONF_DEVICE_MODEL,
     CONF_IP,
     CONF_PORT,
+    CONF_SERIAL_PORT,
+    CONF_SERIAL_BAUD,
     CONF_SLAVE_ID,
     CONF_SCAN_INTERVAL,
     CONF_SCAN_INTERVAL_FAST,
-    DEVICE_CASA_R4
+    DEVICE_MODE_TCPIP, DEVICE_MODE_RTU
 )
-from .coordinator import SwegonCoordinator
+
+from .coordinator import ModbusCoordinator
+from .devices.connection import TCPConnectionParams, RTUConnectionParams
+from .busmanager import RTUBusManager, TCPBusManager, BusClient
 
 _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Set up platform from a ConfigEntry."""
-    _LOGGER.debug("Setting up configuration for Swegon CASA!")
+    _LOGGER.debug("Setting up configuration for Modbus Devices!")
     hass.data.setdefault(DOMAIN, {})
 
     # Load config data
+    device_mode = entry.data.get(CONF_DEVICE_MODE)
+
     name = entry.data[CONF_NAME]
-    device_model = entry.data.get(CONF_DEVICE_MODEL, DEVICE_CASA_R4)
-    ip = entry.data[CONF_IP]
-    port = entry.data[CONF_PORT]
-    slave_id = entry.data[CONF_SLAVE_ID]
+    device_model = entry.data.get(CONF_DEVICE_MODEL, None)
     scan_interval = entry.data[CONF_SCAN_INTERVAL]
     scan_interval_fast = entry.data[CONF_SCAN_INTERVAL_FAST]
+    slave_id = entry.data[CONF_SLAVE_ID]
+
+    bus = None
+
+    if device_mode == DEVICE_MODE_TCPIP:
+        ip = entry.data[CONF_IP]
+        port = entry.data[CONF_PORT]
+
+        # ----- TCP bus setup -----
+        tcp_buses = hass.data.setdefault(DOMAIN, {}).setdefault("tcp_buses", {})
+        bus_key = f"{ip}:{port}"
+
+        bus = tcp_buses.get(bus_key)
+        if bus is None:
+            bus = TCPBusManager(host=ip, port=port, timeout=3.0, )
+            tcp_buses[bus_key] = bus
+
+        bus.attach(entry.entry_id)
+    elif device_mode == DEVICE_MODE_RTU:
+        serial_port = entry.data[CONF_SERIAL_PORT]
+        baudrate = entry.data[CONF_SERIAL_BAUD]
+
+        # ----- RTU bus setup -----
+        rtu_buses = hass.data.setdefault(DOMAIN, {}).setdefault("rtu_buses", {})
+        bus = rtu_buses.get(serial_port)
+
+        if bus is None:
+            # First device on this port → create bus
+            bus = RTUBusManager(port=serial_port, baudrate=baudrate)
+            rtu_buses[serial_port] = bus
+        else:
+            # Validate settings
+            if not bus.matches_serial_config(baudrate=baudrate):
+                _LOGGER.error("Serial port %s already in use with different settings", serial_port)
+                return False
+
+        bus.attach(entry.entry_id)
+    else:
+        _LOGGER.error(f"Unsupported device mode: {device_mode}")
+        return False    
 
     # Create device
     # Each config entry will have only one device, so we use the entry_id as a
@@ -51,9 +96,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     )
 
     # Set up coordinator
-    coordinator = SwegonCoordinator(hass, dev, device_model, ip, port, slave_id,scan_interval, scan_interval_fast)
+    client = BusClient(bus, slave_id)
+    coordinator = ModbusCoordinator(hass, dev, device_model, scan_interval, scan_interval_fast, bus=client)
     hass.data[DOMAIN][entry.entry_id] = coordinator
     
+    # Might throw ConfigEntryNotReady, which should cause retry later
+    # Or ConfigEntryError, which will cause integration to halt permanently.
+    await coordinator.async_config_entry_first_refresh()
+
     # Forward the setup to the platforms.
     hass.async_create_task(
         hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
@@ -61,21 +111,60 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     # Set up options listener
     entry.async_on_unload(entry.add_update_listener(update_listener))
+
+    # Register services
+    hass.services.async_register(DOMAIN, "request_update",partial(service_request_update, hass))
     
     return True
 
+# Service-call to update values
+async def service_request_update(hass, call: ServiceCall):
+    """Handle the service call to update entities for a specific device."""
+    device_id = call.data.get("device_id")
+    if not device_id:
+        _LOGGER.error("Device ID is required")
+        return
+
+    # Get the device entry from the device registry
+    device_registry = dr.async_get(hass)
+    device_entry = device_registry.async_get(device_id)
+    if not device_entry:
+        _LOGGER.error("No device entry found for device ID %s", device_id)
+        return
+    
+    """Find the coordinator corresponding to the given device ID."""
+    for entry_id, coordinator in hass.data[DOMAIN].items():
+        if getattr(coordinator, "device_id", None) == device_id:
+            await coordinator._async_update_data()
+            return
+
+    _LOGGER.warning("No coordinator found for device ID %s", device_id)
+
 async def update_listener(hass: HomeAssistant, entry: ConfigEntry):
-    _LOGGER.debug("Updating Swegon entry!")
+    _LOGGER.debug("Updating Modbus Devices entry!")
     await hass.config_entries.async_reload(entry.entry_id)
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
-    _LOGGER.debug("Unloading Swegon CASA entry!")
+    _LOGGER.debug("Unloading Modbus Devices entry!")
 
     # Unload entries
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
     if unload_ok:
+        # Close coordinator + devices
+        coordinator = hass.data[DOMAIN].get(entry.entry_id)
+        if coordinator:
+            coordinator.close()
+
+        # Detach buses
+        tcp_buses = hass.data.setdefault(DOMAIN, {}).setdefault("tcp_buses", {})
+        rtu_buses = hass.data.setdefault(DOMAIN, {}).setdefault("rtu_buses", {})
+        
+        for bus in list(tcp_buses.values()) + list(rtu_buses.values()):
+                    await bus.detach(entry.entry_id)
+
+        # Remove entry data
         hass.data[DOMAIN].pop(entry.entry_id)
 
     return unload_ok

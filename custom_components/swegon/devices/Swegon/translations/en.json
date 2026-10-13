@@ -1,0 +1,9 @@
+{
+  "Operating Mode": {
+    "Stopped": "Stopped",
+    "Away": "Away",
+    "Home": "Home",
+    "Boost": "Boost",
+    "Travel": "Travel"
+  }
+}
