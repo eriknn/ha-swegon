@@ -1,4 +1,4 @@
-# Home assistant Custom component for Swegon Modbus TCP/IP
+# Home assistant Custom component for Swegon Modbus
 
 ## Installation
 
