@@ -7,4 +7,4 @@ request_update:
       description: "The device for which to update values."
       selector:
         device:
-          integration: modbus_devices
+          integration: swegon

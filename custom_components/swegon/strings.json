@@ -1,15 +1,15 @@
 {    
-	"title": "Modbus Devices",
+	"title": "Swegon Modbus",
     "config": {         
         "step": {   
             "user": { 
-				"title": "Add Modbus Device",
+				"title": "Add Swegon Modbus Device",
                 "data": {
                     "mode_selection": "Select a connection method"
                 }   
             }, 
             "add_tcpip": { 
-				"title": "Modbus TCP/IP Settings",
+				"title": "Swegon TCP/IP Settings",
                 "description": "Enter your details",
                 "data": {                     
                     "name": "Name", 
@@ -22,7 +22,7 @@
                 }        
             }, 
             "add_rtu": { 
-				"title": "Modbus RTU Settings",
+				"title": "Swegon RTU Settings",
                 "description": "Enter your details",
                 "data": {                     
                     "name": "Name", 

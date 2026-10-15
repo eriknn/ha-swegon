@@ -7,19 +7,19 @@ from .coordinator import ModbusCoordinator
 from .entity import ModbusBaseEntity
 from .entity_factory import create_entities
 
-from .devices.datatypes import ModbusGroup, ModbusDefaultGroups, ModbusDatapoint, EntityDataSelect
+from .devices.datatypes import ModbusGroup, ModbusDefaultGroups, ModbusSelect
 
 _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Setup entities from a config entry created in the integrations UI."""
     coordinator:ModbusCoordinator = hass.data[DOMAIN][config_entry.entry_id]
-    async_add_entities(create_entities(coordinator, ModbusSelectEntity, EntityDataSelect))
+    async_add_entities(create_entities(coordinator, ModbusSelectEntity, ModbusSelect))
 
 class ModbusSelectEntity(ModbusBaseEntity, SelectEntity):
     """Representation of a Select."""
 
-    def __init__(self, coordinator:ModbusCoordinator, group:ModbusGroup, key:str, modbusDataPoint:ModbusDatapoint):
+    def __init__(self, coordinator:ModbusCoordinator, group:ModbusGroup, key:str, modbusDataPoint:ModbusSelect):
         """Initialize ModbusBaseEntity."""
         super().__init__(coordinator, group, key, modbusDataPoint)
 
@@ -32,7 +32,7 @@ class ModbusSelectEntity(ModbusBaseEntity, SelectEntity):
         if self._key == "Config Selection":
             self._options = self.coordinator.get_config_options()
         else:
-            self._options = self.modbusDataPoint.entity_data.options
+            self._options = self.modbusDataPoint.options
 
     @property
     def current_option(self):

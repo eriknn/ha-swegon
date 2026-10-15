@@ -12,8 +12,8 @@ class ModbusDataType(str, Enum):
     INT = 'int'
     UINT = 'uint'
     FLOAT = 'float'
-    STRING1 = 'string1'
-    STRING2 = 'string2'
+    STRING1 = 'string1'     # 1 char per register
+    STRING2 = 'string2'     # 2 chars per register
 
 class ModbusMode(Enum):
     NONE = 0                # Used for virtual data points

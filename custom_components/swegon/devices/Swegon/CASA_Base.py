@@ -7,7 +7,7 @@ import logging
 from ..modbusdevice import ModbusDevice
 from ..const import ModbusMode, ModbusPollMode, ModbusDataType
 from ..datatypes import ModbusDatapoint, ModbusGroup, ModbusDefaultGroups
-from ..datatypes import EntityDataSensor, EntityDataSelect, EntityDataNumber, EntityDataBinarySensor, EntityDataSwitch, EntityDataButton
+from ..datatypes import ModbusSensor, ModbusSelect, ModbusNumber, ModbusBinarySensor, ModbusSwitch, ModbusButton
 
 from homeassistant.const import UnitOfTemperature, UnitOfTime, UnitOfRatio
 from homeassistant.const import PERCENTAGE
@@ -35,19 +35,19 @@ class Device(ModbusDevice):
     def loadDatapoints(self):
         # COMMANDS - Read/Write
         self.Datapoints[GROUP_COMMANDS] = {
-            "Operating Mode": ModbusDatapoint(address=5000, entity_data=EntityDataSelect(options={0: "Stopped", 1: "Away", 2: "Home", 3: "Boost", 4: "Travel"})),
-            "Fireplace Mode": ModbusDatapoint(address=5001, entity_data=EntityDataSwitch()),
-            "Travelling Mode": ModbusDatapoint(address=5003, entity_data=EntityDataSwitch()),
+            "Operating Mode": ModbusSelect(address=5000, options={0: "Stopped", 1: "Away", 2: "Home", 3: "Boost", 4: "Travel"}),
+            "Fireplace Mode": ModbusSwitch(address=5001),
+            "Travelling Mode": ModbusSwitch(address=5003),
         }
 
         # COMMANDS2 - Write
         self.Datapoints[GROUP_COMMANDS2] = {
-            "Reset Alarms": ModbusDatapoint(address=5405, entity_data=EntityDataButton()),
+            "Reset Alarms": ModbusButton(address=5405),
         }
 
         # SETPOINTS - Read/Write
         self.Datapoints[GROUP_SETPOINTS] = {
-            "Temperature Setpoint": ModbusDatapoint(address=5100, scaling=0.1, entity_data=EntityDataNumber(deviceClass=NumberDeviceClass.TEMPERATURE, units=UnitOfTemperature.CELSIUS, min_value=13, max_value=25, step=0.1))
+            "Temperature Setpoint": ModbusNumber(address=5100, scaling=0.1, deviceClass=NumberDeviceClass.TEMPERATURE, units=UnitOfTemperature.CELSIUS, min_value=13, max_value=25, step=0.1)
         }
 
         # DEVICE_INFO - Read-only
@@ -94,7 +94,7 @@ class Device(ModbusDevice):
             "Service Info": ModbusDatapoint(address=6128),
             "Filter Guard Info": ModbusDatapoint(address=6129),
             "Emergency Stop": ModbusDatapoint(address=6130),
-            "Active Alarms": ModbusDatapoint(address=6131, entity_data=EntityDataBinarySensor(deviceClass=BinarySensorDeviceClass.PROBLEM, icon="mdi:bell")),
+            "Active Alarms": ModbusBinarySensor(address=6131, deviceClass=BinarySensorDeviceClass.PROBLEM, icon="mdi:bell"),
             "Info Unconf": ModbusDatapoint(address=6132),
             "Preheater temperature high": ModbusDatapoint(address=6140),
             "Preheater temperature high Unconf": ModbusDatapoint(address=6141),
@@ -110,21 +110,21 @@ class Device(ModbusDevice):
 
         # SENSORS - Read
         self.Datapoints[GROUP_SENSORS] = {
-            "Fresh Air Temp": ModbusDatapoint(address=6200, scaling=0.1, entity_data=EntityDataSensor(deviceClass=SensorDeviceClass.TEMPERATURE, stateClass=SensorStateClass.MEASUREMENT, units=UnitOfTemperature.CELSIUS)),
-            "Supply Temp before re-heater": ModbusDatapoint(address=6201, scaling=0.1, entity_data=EntityDataSensor(deviceClass=SensorDeviceClass.TEMPERATURE, stateClass=SensorStateClass.MEASUREMENT, units=UnitOfTemperature.CELSIUS)),
-            "Supply Temp": ModbusDatapoint(address=6202, scaling=0.1, entity_data=EntityDataSensor(deviceClass=SensorDeviceClass.TEMPERATURE, stateClass=SensorStateClass.MEASUREMENT, units=UnitOfTemperature.CELSIUS)),
-            "Extract Temp": ModbusDatapoint(address=6203, scaling=0.1, entity_data=EntityDataSensor(deviceClass=SensorDeviceClass.TEMPERATURE, stateClass=SensorStateClass.MEASUREMENT, units=UnitOfTemperature.CELSIUS)),
-            "Exhaust Temp": ModbusDatapoint(address=6204, scaling=0.1, entity_data=EntityDataSensor(deviceClass=SensorDeviceClass.TEMPERATURE, stateClass=SensorStateClass.MEASUREMENT, units=UnitOfTemperature.CELSIUS)),
+            "Fresh Air Temp": ModbusSensor(address=6200, scaling=0.1, deviceClass=SensorDeviceClass.TEMPERATURE, stateClass=SensorStateClass.MEASUREMENT, units=UnitOfTemperature.CELSIUS),
+            "Supply Temp before re-heater": ModbusSensor(address=6201, scaling=0.1, deviceClass=SensorDeviceClass.TEMPERATURE, stateClass=SensorStateClass.MEASUREMENT, units=UnitOfTemperature.CELSIUS),
+            "Supply Temp": ModbusSensor(address=6202, scaling=0.1, deviceClass=SensorDeviceClass.TEMPERATURE, stateClass=SensorStateClass.MEASUREMENT, units=UnitOfTemperature.CELSIUS),
+            "Extract Temp": ModbusSensor(address=6203, scaling=0.1, deviceClass=SensorDeviceClass.TEMPERATURE, stateClass=SensorStateClass.MEASUREMENT, units=UnitOfTemperature.CELSIUS),
+            "Exhaust Temp": ModbusSensor(address=6204, scaling=0.1, deviceClass=SensorDeviceClass.TEMPERATURE, stateClass=SensorStateClass.MEASUREMENT, units=UnitOfTemperature.CELSIUS),
             "Room_Temp": ModbusDatapoint(address=6205, scaling=0.1),
-            "User Panel 1 Temp": ModbusDatapoint(address=6206, scaling=0.1, entity_data=EntityDataSensor(deviceClass=SensorDeviceClass.TEMPERATURE, stateClass=SensorStateClass.MEASUREMENT, units=UnitOfTemperature.CELSIUS)),
+            "User Panel 1 Temp": ModbusSensor(address=6206, scaling=0.1, deviceClass=SensorDeviceClass.TEMPERATURE, stateClass=SensorStateClass.MEASUREMENT, units=UnitOfTemperature.CELSIUS),
             "User Panel 2 Temp": ModbusDatapoint(address=6207, scaling=0.1),
             "Water Radiator Temp": ModbusDatapoint(address=6208, scaling=0.1),
             "Pre-Heater Temp": ModbusDatapoint(address=6209, scaling=0.1),
             "External Fresh Air Temp": ModbusDatapoint(address=6210, scaling=0.1),
             "CO2 Unfiltered": ModbusDatapoint(address=6211),
-            "CO2 Filtered": ModbusDatapoint(address=6212, entity_data=EntityDataSensor(deviceClass=SensorDeviceClass.CO2, stateClass=SensorStateClass.MEASUREMENT, units=UnitOfRatio.PARTS_PER_MILLION, enabledDefault=False)),
-            "Relative Humidity": ModbusDatapoint(address=6213, entity_data=EntityDataSensor(deviceClass=SensorDeviceClass.HUMIDITY, stateClass=SensorStateClass.MEASUREMENT, units=PERCENTAGE)),
-            "Absolute Humidity": ModbusDatapoint(address=6214, scaling=0.1, entity_data=EntityDataSensor(units="g/m³", icon="mdi:water")),
+            "CO2 Filtered": ModbusSensor(address=6212, deviceClass=SensorDeviceClass.CO2, stateClass=SensorStateClass.MEASUREMENT, units=UnitOfRatio.PARTS_PER_MILLION, enabledDefault=False),
+            "Relative Humidity": ModbusSensor(address=6213, deviceClass=SensorDeviceClass.HUMIDITY, stateClass=SensorStateClass.MEASUREMENT, units=PERCENTAGE),
+            "Absolute Humidity": ModbusSensor(address=6214, scaling=0.1, units="g/m³", icon="mdi:water"),
             "Absolute Humidity SP": ModbusDatapoint(address=6215, scaling=0.1),
             "VOC": ModbusDatapoint(address=6216),
             "Supply Pressure": ModbusDatapoint(address=6217),
@@ -137,38 +137,38 @@ class Device(ModbusDevice):
         self.Datapoints[GROUP_UNIT_STATUSES] = {
             "Unit_state": ModbusDatapoint(address=6300),
             "Speed_state": ModbusDatapoint(address=6301),
-            "Supply Fan": ModbusDatapoint(address=6302, entity_data=EntityDataSensor(units=PERCENTAGE, icon="mdi:fan")),
-            "Exhaust Fan": ModbusDatapoint(address=6303, entity_data=EntityDataSensor(units=PERCENTAGE, icon="mdi:fan")),
+            "Supply Fan": ModbusSensor(address=6302, units=PERCENTAGE, icon="mdi:fan"),
+            "Exhaust Fan": ModbusSensor(address=6303, units=PERCENTAGE, icon="mdi:fan"),
             "Supply_Fan_RPM": ModbusDatapoint(address=6304),
             "Exhaust_Fan_RPM": ModbusDatapoint(address=6305),
-            "Heating Output": ModbusDatapoint(address=6316, entity_data=EntityDataSensor(units=PERCENTAGE, icon="mdi:radiator")),   
-            "Heat Exchanger": ModbusDatapoint(address=6331, entity_data=EntityDataSensor(units=PERCENTAGE, icon="mdi:hvac")),         
+            "Heating Output": ModbusSensor(address=6316, units=PERCENTAGE, icon="mdi:radiator"),   
+            "Heat Exchanger": ModbusSensor(address=6331, units=PERCENTAGE, icon="mdi:hvac"),         
         }
 
         # CONFIGURATION - Read/Write
         self.Datapoints[ModbusDefaultGroups.CONFIG] = {
-            "Travelling Mode Speed Drop": ModbusDatapoint(address=5105, entity_data=EntityDataNumber(units=PERCENTAGE, min_value=0, max_value=20, step=1)),
-            "Fireplace Run Time": ModbusDatapoint(address=5103, entity_data=EntityDataNumber(units=UnitOfTime.MINUTES, min_value=0, max_value=60, step=1)),
-            "Fireplace Max Speed Difference": ModbusDatapoint(address=5104, entity_data=EntityDataNumber(units=PERCENTAGE, min_value=0, max_value=25, step=1)),
-            "Night Cooling": ModbusDatapoint(address=5163, entity_data=EntityDataNumber(units=None)),
-            "Night Cooling FreshAir Max": ModbusDatapoint(address=5164, scaling=0.1, entity_data=EntityDataNumber(deviceClass=NumberDeviceClass.TEMPERATURE, units=UnitOfTemperature.CELSIUS, min_value=0, max_value=25, step=0.1)),
-            "Night Cooling FreshAir Start": ModbusDatapoint(address=5165, scaling=0.1, entity_data=EntityDataNumber(deviceClass=NumberDeviceClass.TEMPERATURE, units=UnitOfTemperature.CELSIUS, min_value=0, max_value=25, step=0.1)),
-            "Night Cooling RoomTemp Start": ModbusDatapoint(address=5166, scaling=0.1, entity_data=EntityDataNumber(deviceClass=NumberDeviceClass.TEMPERATURE, units=UnitOfTemperature.CELSIUS, min_value=0, max_value=35, step=0.1)),
-            "Night Cooling SupplyTemp Min": ModbusDatapoint(address=5167, scaling=0.1, entity_data=EntityDataNumber(deviceClass=NumberDeviceClass.TEMPERATURE, units=UnitOfTemperature.CELSIUS, min_value=10, max_value=25, step=0.1)),
-            "Away Supply Speed": ModbusDatapoint(address=5301, entity_data=EntityDataNumber(units=PERCENTAGE, min_value=20, max_value=100, step=1)),
-            "Away Exhaust Speed": ModbusDatapoint(address=5302, entity_data=EntityDataNumber(units=PERCENTAGE, min_value=20, max_value=100, step=1)),
-            "Home Supply Speed": ModbusDatapoint(address=5303, entity_data=EntityDataNumber(units=PERCENTAGE, min_value=20, max_value=100, step=1)),
-            "Home Exhaust Speed": ModbusDatapoint(address=5304, entity_data=EntityDataNumber(units=PERCENTAGE, min_value=20, max_value=100, step=1)),
-            "Boost Supply Speed": ModbusDatapoint(address=5305, entity_data=EntityDataNumber(units=PERCENTAGE, min_value=20, max_value=100, step=1)),
-            "Boost Exhaust Speed": ModbusDatapoint(address=5306, entity_data=EntityDataNumber(units=PERCENTAGE, min_value=20, max_value=100, step=1)),
-            "Operating Mode": ModbusDatapoint(address=5000, entity_data=EntityDataSelect(options={0: "Stopped", 1: "Away", 2: "Home", 3: "Boost", 4: "Travel"})),
+            "Travelling Mode Speed Drop": ModbusNumber(address=5105, units=PERCENTAGE, min_value=0, max_value=20, step=1),
+            "Fireplace Run Time": ModbusNumber(address=5103, units=UnitOfTime.MINUTES, min_value=0, max_value=60, step=1),
+            "Fireplace Max Speed Difference": ModbusNumber(address=5104, units=PERCENTAGE, min_value=0, max_value=25, step=1),
+            "Night Cooling": ModbusNumber(address=5163, units=None),
+            "Night Cooling FreshAir Max": ModbusNumber(address=5164, scaling=0.1, deviceClass=NumberDeviceClass.TEMPERATURE, units=UnitOfTemperature.CELSIUS, min_value=0, max_value=25, step=0.1),
+            "Night Cooling FreshAir Start": ModbusNumber(address=5165, scaling=0.1, deviceClass=NumberDeviceClass.TEMPERATURE, units=UnitOfTemperature.CELSIUS, min_value=0, max_value=25, step=0.1),
+            "Night Cooling RoomTemp Start": ModbusNumber(address=5166, scaling=0.1, deviceClass=NumberDeviceClass.TEMPERATURE, units=UnitOfTemperature.CELSIUS, min_value=0, max_value=35, step=0.1),
+            "Night Cooling SupplyTemp Min": ModbusNumber(address=5167, scaling=0.1, deviceClass=NumberDeviceClass.TEMPERATURE, units=UnitOfTemperature.CELSIUS, min_value=10, max_value=25, step=0.1),
+            "Away Supply Speed": ModbusNumber(address=5301, units=PERCENTAGE, min_value=20, max_value=100, step=1),
+            "Away Exhaust Speed": ModbusNumber(address=5302, units=PERCENTAGE, min_value=20, max_value=100, step=1),
+            "Home Supply Speed": ModbusNumber(address=5303, units=PERCENTAGE, min_value=20, max_value=100, step=1),
+            "Home Exhaust Speed": ModbusNumber(address=5304, units=PERCENTAGE, min_value=20, max_value=100, step=1),
+            "Boost Supply Speed": ModbusNumber(address=5305, units=PERCENTAGE, min_value=20, max_value=100, step=1),
+            "Boost Exhaust Speed": ModbusNumber(address=5306, units=PERCENTAGE, min_value=20, max_value=100, step=1),
+            "Operating Mode": ModbusSelect(address=5000, options={0: "Stopped", 1: "Away", 2: "Home", 3: "Boost", 4: "Travel"}),
         }
 
         # UI datapoints that are calculated and not read directly over modbus
         self.Datapoints[GROUP_UI] = {
-            "Current Alarms": ModbusDatapoint(entity_data=EntityDataSensor(icon="mdi:bell")),
-            "Efficiency": ModbusDatapoint(entity_data=EntityDataSensor(units=PERCENTAGE, icon="mdi:percent")),
-            "Efficiency Extract": ModbusDatapoint(entity_data=EntityDataSensor(units=PERCENTAGE, icon="mdi:percent")),
+            "Current Alarms": ModbusSensor(icon="mdi:bell"),
+            "Efficiency": ModbusSensor(units=PERCENTAGE, icon="mdi:percent"),
+            "Efficiency Extract": ModbusSensor(units=PERCENTAGE, icon="mdi:percent"),
         }       
 
     def onAfterFirstRead(self):
@@ -208,7 +208,7 @@ class Device(ModbusDevice):
         for (dataPointName, data) in alarms.items():
             if data.value:
                 attrs.update({dataPointName:"ALARM"})
-        alarms["Active Alarms"].entity_data.attrs = attrs
+        alarms["Active Alarms"].attrs = attrs
 
         # Set alarm state on current alarms entity for summary
         active = sorted(attrs.keys())

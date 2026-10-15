@@ -1,4 +1,4 @@
-"""Support for Modbus devices."""
+"""Support for Swegon Modbus."""
 import logging
 
 from functools import partial
@@ -26,14 +26,13 @@ from .const import (
 )
 
 from .coordinator import ModbusCoordinator
-from .devices.connection import TCPConnectionParams, RTUConnectionParams
 from .busmanager import RTUBusManager, TCPBusManager, BusClient
 
 _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Set up platform from a ConfigEntry."""
-    _LOGGER.debug("Setting up configuration for Modbus Devices!")
+    _LOGGER.debug("Setting up configuration for Swegon Modbus!")
     hass.data.setdefault(DOMAIN, {})
 
     # Load config data
@@ -141,12 +140,12 @@ async def service_request_update(hass, call: ServiceCall):
     _LOGGER.warning("No coordinator found for device ID %s", device_id)
 
 async def update_listener(hass: HomeAssistant, entry: ConfigEntry):
-    _LOGGER.debug("Updating Modbus Devices entry!")
+    _LOGGER.debug("Updating Swegon Modbus entry!")
     await hass.config_entries.async_reload(entry.entry_id)
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
-    _LOGGER.debug("Unloading Modbus Devices entry!")
+    _LOGGER.debug("Unloading Swegon Modbus entry!")
 
     # Unload entries
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)

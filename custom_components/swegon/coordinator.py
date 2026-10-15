@@ -7,7 +7,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 
 from .busmanager import BusClient
 from .devices.datatypes import ModbusDefaultGroups, ModbusDatapoint
-from .devices.datatypes import EntityDataSelect, EntityDataNumber
+from .devices.datatypes import ModbusSelect, ModbusNumber
 from .devices.modbusdevice import ModbusDevice
 from .entity import ModbusBaseEntity
 
@@ -87,10 +87,7 @@ class ModbusCoordinator(DataUpdateCoordinator):
                 _LOGGER.debug("Device %s has no translations for language '%s'; using defaults", self.name, language)
                 return
 
-            translations = await self.hass.async_add_executor_job(
-                load_json,
-                translation_file,
-            )
+            translations = await self.hass.async_add_executor_job(load_json, translation_file)
 
             self._modbusDevice.loadTranslations(translations)
 
@@ -175,9 +172,9 @@ class ModbusCoordinator(DataUpdateCoordinator):
             self.config_value_active = None
 
         # Select active entity
-        if isinstance(datapoint.entity_data, EntityDataNumber):
+        if isinstance(datapoint, ModbusNumber):
             self.config_value_active = self.config_value_number
-        elif isinstance(datapoint.entity_data, EntityDataSelect):
+        elif isinstance(datapoint, ModbusSelect):
             self.config_value_active = self.config_value_select
         else:
             _LOGGER.warning("Entity type not supported for config!")
@@ -195,7 +192,7 @@ class ModbusCoordinator(DataUpdateCoordinator):
 
         _LOGGER.debug("Dps: %s %s", old_dp, new_dp)
 
-        if old_dp is None or type(old_dp.entity_data) != type(new_dp.entity_data):
+        if old_dp is None or type(old_dp) != type(new_dp):
             _LOGGER.debug("New type!")
             await self._swap_config_value_entity(new_dp)
         try:
@@ -227,7 +224,7 @@ class ModbusCoordinator(DataUpdateCoordinator):
     def get_attrs(self, group, key):
         if group in self._modbusDevice.Datapoints:
             if key in self._modbusDevice.Datapoints[group]:
-                return self._modbusDevice.Datapoints[group][key].entity_data.attrs
+                return self._modbusDevice.Datapoints[group][key].attrs
         return None
 
     async def write_value(self, group, key, value):
